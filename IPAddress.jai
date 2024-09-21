@@ -543,8 +543,7 @@ address_init_auto_detect :: (str: string) -> address: IPAddress, remainder: stri
 
 /*
 Converts the address to a human-readable string.
-This does not include port. Read that from the IPAddress struct yourself if you want it.
-This also doesn't collapse zeroes in IPv6 addresses using :: syntax right now.
+This doesn't collapse zeroes in IPv6 addresses using :: syntax right now.
 */
 address_to_string :: (using address: IPAddress, canonical := false) -> string {
     if type == {
