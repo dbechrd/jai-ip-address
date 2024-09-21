@@ -2,8 +2,7 @@
 
 A standalone IP address module, for parsing, comparing and converting IP addresses to and from strings.
 
-This module was originally a native Jai port of the Address class in Glenn Fielder's yojimbo library, as of this commit:
-https://github.com/mas-bandwidth/yojimbo/blob/c6c02dfec105b36b9cbefd82f86f11f894f6de51/source/yojimbo_address.cpp
+This module was originally a native Jai port of the Address class in Glenn Fielder's yojimbo library, as of [this commit](https://github.com/mas-bandwidth/yojimbo/blob/c6c02dfec105b36b9cbefd82f86f11f894f6de51/source/yojimbo_address.cpp).
 
 It has been completely rewritten from scratch, with many features added, including significant error handling improvements.
 
