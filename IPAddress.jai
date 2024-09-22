@@ -455,7 +455,9 @@ address_init_v6 :: (str: string, port: u16) -> result: IPAddress, remainder: str
 
 /*
 Create an IPv6 address.
-IMPORTANT: Pass in address fields and the port in host byte order. The address class handles the conversion to network order for you.
+
+IMPORTANT: Pass in address fields and the port in host byte order. The address class handles the conversion to network
+order for you.
 
 @param address Array of 8 16 bit address fields for the IPv6 address (host byte order).
 @param port The IPv6 port (host byte order).
@@ -471,7 +473,9 @@ address_init_v6 :: (ipv6: [8] u16, port: u16 = 0) -> IPAddress {
 
 /*
 Create an IPv6 address.
-IMPORTANT: Pass in address fields and the port in host byte order. The address class handles the conversion to network order for you.
+
+IMPORTANT: Pass in address fields and the port in host byte order. The address class handles the conversion to network
+order for you.
 
 @param a First field of the IPv6 address (host byte order).
 @param b Second field of the IPv6 address (host byte order).
@@ -500,28 +504,31 @@ address_init_v6 :: (a: u16, b: u16, c: u16, d: u16, e: u16, f: u16, g: u16, h: u
 }
 
 /*
-Converts an IPv4 address to its corresponding IPv4-mapped IPv6 address.
+Converts an address to its corresponding IPv6 address (if not already an IPv6 address).
 
-For example, the string "127.0.0.1" can be converted to an IPv4 address by calling `address_init_v4`.
-After checking for success, the resulting address can be passed into this function to convert it to an IPv6
-address that is equivalent to the result of calling `address_init_v6("::FFFF:7F00:1")`, where 7F00:0001
-is the hexademical representation of 127.0.0.1, and the preceding FFFF denotes an IPv4-mapped IPv6 address as
-described in RFC 4291 Section 2.5.5.2 (https://datatracker.ietf.org/doc/html/rfc4291#section-2.5.5.2).
+For IPv4 address, this convert the addres to an IPv4-mapped IPv6 address. For example, the string "127.0.0.1" can be
+converted to an IPv4 address by calling `address_init_v4`. After checking for success, the resulting address can be
+passed into this function to convert it to an IPv6 address that is equivalent to the result of calling
+`address_init_v6("::FFFF:7F00:1")`, where 7F00:0001 is the hexademical representation of 127.0.0.1, and the preceding
+FFFF denotes an IPv4-mapped IPv6 address as described in RFC 4291 Section 2.5.5.2
+(https://datatracker.ietf.org/doc/html/rfc4291#section-2.5.5.2).
 */
-address_init_v6 :: (ipv4: IPAddress) -> IPAddress {
-    assert(ipv4.type == .IPv4);
-
-    if (ipv4.type != .IPv4) {
-        return .{};
+address_init_v6 :: (address: IPAddress) -> IPAddress {
+    if #complete address.type == {
+        case .None;
+            return .{};
+        case .IPv4;
+            ipv6: IPAddress;
+            ipv6.type = .IPv6;
+            ipv6.port = ipv4.port;
+            ipv6.data.v6[5] = 0xFFFF;
+            ipv6.data.v6[6] = (cast(u16) ipv4.data.v4[0]) << 8 | ipv4.data.v4[1];
+            ipv6.data.v6[7] = (cast(u16) ipv4.data.v4[2]) << 8 | ipv4.data.v4[3];
+            return ipv6;
+        case .IPv6;
+            assert(false, "Why are you converting IPv6 to IPv6 again? Silly boi");
+            return address;
     }
-
-    ipv6: IPAddress;
-    ipv6.type = .IPv6;
-    ipv6.port = ipv4.port;
-    ipv6.data.v6[5] = 0xFFFF;
-    ipv6.data.v6[6] = (cast(u16) ipv4.data.v4[0]) << 8 | ipv4.data.v4[1];
-    ipv6.data.v6[7] = (cast(u16) ipv4.data.v4[2]) << 8 | ipv4.data.v4[3];
-    return ipv6;
 }
 
 /*
