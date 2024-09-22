@@ -7,9 +7,7 @@ https://github.com/mas-bandwidth/yojimbo/blob/c6c02dfec105b36b9cbefd82f86f11f894
 It has been completely rewritten from scratch, with many features added, including significant validation improvements.
 */
 
-#module_parameters(
-    ENABLE_LOGGING := false
-);
+#module_parameters () (ENABLE_LOGGING := false);
 
 IPType :: enum u8 {
     None;  // Not an address. Set by the default constructor.
