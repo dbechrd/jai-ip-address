@@ -541,9 +541,11 @@ address_init_auto_detect :: (str: string) -> address: IPAddress, remainder: stri
     }
 
     if v6 {
-        return ..address_init_v6(str);
+        a, r := address_init_v6(str);
+        return a, r;
     } else {
-        return ..address_init_v4(str);
+        a, r := address_init_v4(str);
+        return a, r;
     }
 }
 
