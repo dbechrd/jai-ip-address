@@ -526,17 +526,25 @@ address_init_v6 :: (ipv4: IPAddress) -> IPAddress {
 
 /*
 Converts an IPv4 *or* IPv6 string to an IPAddress, by auto-detecting which type it is. Auto-detection
-is essentially free for IPv4 addresses, but a bit more expensive for IPv6 addresses, because the parser
-will first attempt to parse the string as IPv4, then parse IPv6 if the IPv4 parse fails. If you know
-that your address string is always an IPv6 address, use address_init_v6() instead.
+is based on the string containing a colon (:) in the first 6 characters. "[ffff:" is the longest valid
+IPv6 string prefix before the colon appears. This is shorter than "1.1.1.1:", which is the shortest valid
+IPv4 string prefix before the port separator colon appears. If a colon is not found, the string is assumed
+to be an IPv6 address, and we will not attempt to parse it as IPv4 or log any errors about bad IPv4 formatting.
 */
 address_init_auto_detect :: (str: string) -> address: IPAddress, remainder: string {
-    address, remainder := address_init_v4(str);
-    if address.type == .IPv4 {
-        return address, remainder;
+    v6: bool = false;
+    for 0..min(5, str.count-1) {
+        if str[it] == #char ":" {
+            v6 = true;
+            break;
+        }
     }
-    address, remainder = address_init_v6(str);
-    return address, remainder;
+
+    if v6 {
+        return ..address_init_v6(str);
+    } else {
+        return ..address_init_v4(str);
+    }
 }
 
 /*
