@@ -9,7 +9,7 @@ This module was originally a native Jai port of the Address class in Glenn Field
 
 It has been completely rewritten from scratch, with many features added, including significant error handling improvements.
 
-## Example Usage
+## Basic Usage
 ```
 address_v4 := address_init_v4("127.0.0.1:80");
 print("%\n%\n", address_v4, address_to_string(address_v4));
