@@ -127,7 +127,7 @@ See the `address_init_v4 :: (str: string)` overload for more information about v
 */
 address_init_v4 :: (str: string, port: u16) -> result: IPAddress, remainder: string {
     address, remainder := address_init_v4(str);
-    if address.type == .IPv4 {
+    if address.type == .IPv4 && port {
         address.port = port;
     }
     return address, remainder;
@@ -447,7 +447,7 @@ See the `address_init_v6 :: (str: string)` overload for more information about v
 */
 address_init_v6 :: (str: string, port: u16) -> result: IPAddress, remainder: string {
     address, remainder := address_init_v6(str);
-    if address.type == .IPv6 {
+    if address.type == .IPv6 && port {
         address.port = port;
     }
     return address, remainder;
@@ -538,7 +538,7 @@ IPv6 string prefix before the colon appears. This is shorter than "1.1.1.1:", wh
 IPv4 string prefix before the port separator colon appears. If a colon is not found, the string is assumed
 to be an IPv6 address, and we will not attempt to parse it as IPv4 or log any errors about bad IPv4 formatting.
 */
-address_init_auto_detect :: (str: string) -> address: IPAddress, remainder: string {
+address_init_auto_detect :: (str: string, port: u16 = 0) -> address: IPAddress, remainder: string {
     v6: bool = false;
     for 0..min(5, str.count-1) {
         if str[it] == #char ":" {
@@ -548,10 +548,10 @@ address_init_auto_detect :: (str: string) -> address: IPAddress, remainder: stri
     }
 
     if v6 {
-        a, r := address_init_v6(str);
+        a, r := address_init_v6(str, port);
         return a, r;
     } else {
-        a, r := address_init_v4(str);
+        a, r := address_init_v4(str, port);
         return a, r;
     }
 }
@@ -705,6 +705,7 @@ address_test :: () {
     address_tests_running = true;
     defer address_tests_running = false;
     run_tests();
+    reset_temporary_storage();
 }
 
 // ----------------------------------------------------------------
@@ -813,8 +814,8 @@ EOS
             }
         } else {
             log(FAIL_MSG, s, type,
-                address_to_string(expected_address, canonical=true), expected_remainder, expected_log,
-                address_to_string(ip, canonical=true), remainder, address_last_log_message
+                address_to_string(expected_address, canonical=true,, temp), expected_remainder, expected_log,
+                address_to_string(ip, canonical=true,, temp), remainder, address_last_log_message
             );
         }
     }
@@ -872,14 +873,14 @@ EOS
 
     // valid addresses
     test_ip(.IPv4, "127.0.0.1",    -1, .{ type = .IPv4, data.v4 = .[127, 0, 0, 1] });
-    test_ip(.IPv4, "127.0.0.1:0",  -1, .{ type = .IPv4, data.v4 = .[127, 0, 0, 1], port = 0 });
+    test_ip(.IPv4, "127.0.0.1:0",  -1, .{ type = .IPv4, data.v4 = .[127, 0, 0, 1], port = 0  });
     test_ip(.IPv4, "127.0.0.1:80", -1, .{ type = .IPv4, data.v4 = .[127, 0, 0, 1], port = 80 });
 
     // valid addresses with explicit port overrides
     test_ip(.IPv4, "127.0.0.1",    80, .{ type = .IPv4, data.v4 = .[127, 0, 0, 1], port = 80 });
     test_ip(.IPv4, "127.0.0.1:22", 80, .{ type = .IPv4, data.v4 = .[127, 0, 0, 1], port = 80 });
     test_ip(.IPv4, "127.0.0.1:0",  80, .{ type = .IPv4, data.v4 = .[127, 0, 0, 1], port = 80 });
-    test_ip(.IPv4, "127.0.0.1:80",  0, .{ type = .IPv4, data.v4 = .[127, 0, 0, 1], port = 0 });
+    test_ip(.IPv4, "127.0.0.1:80",  0, .{ type = .IPv4, data.v4 = .[127, 0, 0, 1], port = 80 });
 
     //--- ipv6 tests ----------------------------------------------------------
 
@@ -940,14 +941,14 @@ EOS
     // valid addresses with explicit port overrides
     test_ip(.IPv6, "::",              80, .{ type = .IPv6, port = 80 });
     test_ip(.IPv6, "::1:2:3:4",       80, .{ type = .IPv6, data.v6 = .[0, 0, 0, 0, 1, 2, 3, 4], port = 80 });
-    test_ip(.IPv6, "::1:2:3:4",       0,  .{ type = .IPv6, data.v6 = .[0, 0, 0, 0, 1, 2, 3, 4], port = 0 });
+    test_ip(.IPv6, "::1:2:3:4",       0,  .{ type = .IPv6, data.v6 = .[0, 0, 0, 0, 1, 2, 3, 4], port = 0  });
     test_ip(.IPv6, "::1:2:3:4?",      80, .{ type = .IPv6, data.v6 = .[0, 0, 0, 0, 1, 2, 3, 4], port = 80 }, "?");
 
     // valid bracketed addresses (with mandatory port number), and explicit port overrides
     test_ip(.IPv6, "[::]:22",         80, .{ type = .IPv6, port = 80 });
     test_ip(.IPv6, "[::1:2:3:4]:22",  80, .{ type = .IPv6, data.v6 = .[0, 0, 0, 0, 1, 2, 3, 4], port = 80 });
     test_ip(.IPv6, "[::1:2:3:4]:0",   80, .{ type = .IPv6, data.v6 = .[0, 0, 0, 0, 1, 2, 3, 4], port = 80 });
-    test_ip(.IPv6, "[::1:2:3:4]:80?", 0,  .{ type = .IPv6, data.v6 = .[0, 0, 0, 0, 1, 2, 3, 4], port = 0 }, "?");
+    test_ip(.IPv6, "[::1:2:3:4]:80?", 0,  .{ type = .IPv6, data.v6 = .[0, 0, 0, 0, 1, 2, 3, 4], port = 80 }, "?");
 
     log("Passed!\n");
 }
