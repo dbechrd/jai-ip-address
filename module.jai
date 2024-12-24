@@ -376,7 +376,7 @@ address_init_v6 :: (str: string) -> result: IPAddress, remainder: string {
         tail_start := worm_segment + 1;
         tail_length := segment - tail_start + 1;
         dest := 8 - tail_length;
-        for < tail_length-1..0 {
+        for #v2 < 0..tail_length-1 {
             address.data.v6[dest + it] = address.data.v6[tail_start + it];
             address.data.v6[tail_start + it] = 0;
         }
